@@ -16,6 +16,8 @@ body {
   max-width: 420px;
   padding: 32px 24px;
   text-align: center;
+  z-index: 1;
+  position: relative;
 }
 h1 {
   font-size: 22px;
@@ -63,4 +65,39 @@ button:hover {
 .result {
   font-weight: bold;
   margin-top: 10px;
+}
+
+/* 색종이(컨페티) 효과 */
+#confetti-container {
+  pointer-events: none;
+  position: fixed;
+  left: 0; top: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+.confetti {
+  position: absolute;
+  width: 12px;
+  height: 18px;
+  opacity: 0.8;
+  border-radius: 2px;
+  will-change: transform, opacity;
+  animation: confetti-fall 1.2s linear forwards;
+}
+
+@keyframes confetti-fall {
+  0% {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(80vh) rotate(360deg) scale(0.7);
+  }
 }
