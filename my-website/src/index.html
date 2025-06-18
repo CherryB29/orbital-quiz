@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>오비탈 퀴즈</title>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f0f0f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .quiz-box {
+      background-color: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 420px;
+      padding: 32px 24px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 22px;
+      margin: 8px 0 16px;
+      color: #333;
+    }
+    #score {
+      font-size: 16px;
+      margin-bottom: 8px;
+      color: #555;
+    }
+    #accuracy {
+      font-size: 14px;
+      margin-bottom: 16px;
+      color: #777;
+    }
+    #question {
+      font-size: 18px;
+      line-height: 1.4;
+      margin-bottom: 20px;
+    }
+    input[type="number"] {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid #cccccc;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      background-color: #4caf50;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.25s;
+    }
+    button:hover {
+      background-color: #449d48;
+    }
+    .result {
+      font-weight: bold;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-box">
+    <h1>오비탈 퀴즈</h1>
+    <div id="score">점수: 0 / 0</div>
+    <div id="accuracy">정답률: 0%</div>
+    <div id="question">문제를 불러오는 중...</div>
+    <input type="number" id="answer" placeholder="숫자를 입력하세요" />
+    <button onclick="checkAnswer()">제출</button>
+    <div class="result" id="result"></div>
+    <button id="trophyBtn" title="랭킹 보기" style="background:none;border:none;cursor:pointer;font-size:28px;margin-top:16px;">🏆</button>
+    <div id="ranking" style="margin-top:24px; display:none;"></div>
+  </div>
+  <script>
+    const quizData = [
+      { symbol: "H",  orbital2e: 0,  sOrbitals: 1, pOrbitals: 0, sElectrons: 1,  pElectrons: 0,  valence: 1, unpaired: 1 },
+      { symbol: "He", orbital2e: 1,  sOrbitals: 1, pOrbitals: 0, sElectrons: 2,  pElectrons: 0,  valence: 0, unpaired: 0 },
+      { symbol: "Li", orbital2e: 1,  sOrbitals: 2, pOrbitals: 0, sElectrons: 3,  pElectrons: 0,  valence: 1, unpaired: 1 },
+      { symbol: "Be", orbital2e: 2,  sOrbitals: 2, pOrbitals: 0, sElectrons: 4,  pElectrons: 0,  valence: 2, unpaired: 0 },
+      { symbol: "B",  orbital2e: 2,  sOrbitals: 2, pOrbitals: 1, sElectrons: 4,  pElectrons: 1,  valence: 3, unpaired: 1 },
+      { symbol: "C",  orbital2e: 2,  sOrbitals: 2, pOrbitals: 2, sElectrons: 4,  pElectrons: 2,  valence: 4, unpaired: 2 },
+      { symbol: "N",  orbital2e: 2,  sOrbitals: 2, pOrbitals: 3, sElectrons: 4,  pElectrons: 3,  valence: 5, unpaired: 3 },
+      { symbol: "O",  orbital2e: 3,  sOrbitals: 2, pOrbitals: 3, sElectrons: 4,  pElectrons: 4,  valence: 6, unpaired: 2 },
+      { symbol: "F",  orbital2e: 4,  sOrbitals: 2, pOrbitals: 3, sElectrons: 4,  pElectrons: 5,  valence: 7, unpaired: 1 },
+      { symbol: "Ne", orbital2e: 5,  sOrbitals: 2, pOrbitals: 3, sElectrons: 4,  pElectrons: 6,  valence: 0, unpaired: 0 },
+      { symbol: "Na", orbital2e: 5,  sOrbitals: 3, pOrbitals: 3, sElectrons: 5,  pElectrons: 6,  valence: 1, unpaired: 1 },
+      { symbol: "Mg", orbital2e: 6,  sOrbitals: 3, pOrbitals: 3, sElectrons: 6,  pElectrons: 6,  valence: 2, unpaired: 0 },
+      { symbol: "Al", orbital2e: 6,  sOrbitals: 3, pOrbitals: 4, sElectrons: 6,  pElectrons: 7,  valence: 3, unpaired: 1 },
+      { symbol: "Si", orbital2e: 6,  sOrbitals: 3, pOrbitals: 5, sElectrons: 6,  pElectrons: 8,  valence: 4, unpaired: 2 },
+      { symbol: "P",  orbital2e: 6,  sOrbitals: 3, pOrbitals: 6, sElectrons: 6,  pElectrons: 9,  valence: 5, unpaired: 3 },
+      { symbol: "S",  orbital2e: 7,  sOrbitals: 3, pOrbitals: 6, sElectrons: 6,  pElectrons: 10, valence: 6, unpaired: 2 },
+      { symbol: "Cl", orbital2e: 8,  sOrbitals: 3, pOrbitals: 6, sElectrons: 6,  pElectrons: 11, valence: 7, unpaired: 1 },
+      { symbol: "Ar", orbital2e: 9,  sOrbitals: 3, pOrbitals: 6, sElectrons: 6,  pElectrons: 12, valence: 0, unpaired: 0 },
+      { symbol: "K",  orbital2e: 9,  sOrbitals: 4, pOrbitals: 6, sElectrons: 7,  pElectrons: 12, valence: 1, unpaired: 1 },
+      { symbol: "Ca", orbital2e: 10, sOrbitals: 4, pOrbitals: 6, sElectrons: 8,  pElectrons: 12, valence: 2, unpaired: 0 }
+    ];
+
+    const questionTypes = [
+      { key: "orbital2e",  text: "전자가 2개 들어있는 오비탈 수는?" },
+      { key: "sOrbitals", text: "전자가 들어 있는 s 오비탈의 수는?" },
+      { key: "pOrbitals", text: "전자가 들어 있는 p 오비탈의 수는?" },
+      { key: "sElectrons", text: "s 오비탈에 들어 있는 전자 수는?" },
+      { key: "pElectrons", text: "p 오비탈에 들어 있는 전자 수는?" },
+      { key: "valence",    text: "원자가 전자 수는?" },
+      { key: "unpaired",   text: "홀전자의 수는?" }
+    ];
+
+    let correctCount = 0;
+    let attemptedCount = 0;
+    const answeredMap = new Map();
+
+    let currentQuestion;
+    const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+    function loadQuestion() {
+      const element = pickRandom(quizData);
+      const qType = pickRandom(questionTypes);
+      currentQuestion = {
+        id: `${element.symbol}-${qType.key}`,
+        answer: element[qType.key],
+        html: `원소기호: <strong>${element.symbol}</strong><br>${qType.text}`
+      };
+
+      document.getElementById("question").innerHTML = currentQuestion.html;
+      document.getElementById("answer").value = "";
+      document.getElementById("result").innerText = "";
+      updateScoreDisplay();
+    }
+
+    let userName = "";
+
+    function askUserName() {
+      // 항상 새로 입력받음 (localStorage 사용 안 함)
+      while (!userName) {
+        userName = prompt("계정 이름을 입력하세요 (랭킹 및 기록에 사용됩니다):");
+      }
+    }
+
+    // 이름별로 문제수/정답률 저장
+    function saveRanking(name, solved, correct) {
+      let rankings = JSON.parse(localStorage.getItem("orbitalQuizRanking") || "{}");
+      if (!rankings[name]) {
+        rankings[name] = { solved: 0, correct: 0 };
+      }
+      rankings[name].solved = solved;
+      rankings[name].correct = correct;
+      localStorage.setItem("orbitalQuizRanking", JSON.stringify(rankings));
+    }
+
+    function showRanking() {
+      const rankings = JSON.parse(localStorage.getItem("orbitalQuizRanking") || "{}");
+      const rankingDiv = document.getElementById("ranking");
+      const rankingArr = Object.entries(rankings).map(([name, data]) => ({
+        name,
+        solved: data.solved,
+        accuracy: data.solved === 0 ? 0 : Math.round((data.correct / data.solved) * 100)
+      }));
+      if (rankingArr.length === 0) {
+        rankingDiv.innerHTML = "<b>랭킹이 없습니다.</b>";
+        return;
+      }
+      rankingArr.sort((a, b) => b.solved - a.solved || b.accuracy - a.accuracy);
+      rankingDiv.innerHTML = "<b>랭킹 TOP 5</b><ol>" +
+        rankingArr.slice(0, 5).map(r => `<li>${r.name} - ${r.solved}문제, 정답률 ${r.accuracy}%</li>`).join("") +
+        "</ol>";
+    }
+
+    function updateScoreDisplay() {
+      document.getElementById("score").innerText = `점수: ${correctCount} / ${attemptedCount}`;
+      const accuracy = attemptedCount === 0 ? 0 : Math.round((correctCount / attemptedCount) * 100);
+      document.getElementById("accuracy").innerText = `정답률: ${accuracy}%`;
+      // 이름별로 기록 저장
+      if (userName) {
+        saveRanking(userName, attemptedCount, correctCount);
+      }
+    }
+
+    // 문제별로 한 번만 시도 기록, 오답 후 재시도는 점수/시도수 증가 없음
+    function checkAnswer() {
+      const input = document.getElementById("answer");
+      const userAnswer = parseInt(input.value, 10);
+      const resultBox = document.getElementById("result");
+      const qid = currentQuestion.id;
+
+      if (isNaN(userAnswer)) {
+        resultBox.style.color = "#d9534f";
+        resultBox.innerText = "숫자를 입력하세요.";
+        return;
+      }
+
+      // 이미 시도한 문제면 오답 안내만
+      if (answeredMap.has(qid)) {
+        if (userAnswer === currentQuestion.answer) {
+          resultBox.style.color = "#d9534f";
+          resultBox.innerText = "이미 이 문제는 시도하셨습니다. 다음 문제로 넘어가세요.";
+        } else {
+          resultBox.style.color = "#d9534f";
+          resultBox.innerText = "오답입니다. 이미 시도한 문제입니다.";
+        }
+        return;
+      }
+
+      // 처음 시도하는 문제만 기록
+      attemptedCount++;
+      answeredMap.set(qid, true);
+
+      if (userAnswer === currentQuestion.answer) {
+        correctCount++;
+        resultBox.style.color = "#28a745";
+        resultBox.innerText = "정답입니다! 다음 문제로 넘어갑니다.";
+        updateScoreDisplay();
+        setTimeout(loadQuestion, 1200);
+      } else {
+        resultBox.style.color = "#d9534f";
+        resultBox.innerText = "오답입니다. 다음 문제로 넘어가세요.";
+        updateScoreDisplay();
+        setTimeout(loadQuestion, 1200);
+      }
+      updateScoreDisplay();
+    }
+
+    // 트로피 버튼으로 랭킹 토글
+    document.addEventListener("DOMContentLoaded", function() {
+      const trophyBtn = document.getElementById("trophyBtn");
+      const rankingDiv = document.getElementById("ranking");
+      trophyBtn.onclick = function() {
+        if (rankingDiv.style.display === "none" || rankingDiv.style.display === "") {
+          showRanking();
+          rankingDiv.style.display = "block";
+        } else {
+          rankingDiv.style.display = "none";
+        }
+      };
+    });
+
+    window.onload = function() {
+      askUserName();
+      loadQuestion();
+      // 랭킹은 트로피 버튼으로만 조회
+    };
+  </script>
+</body>
+</html>
