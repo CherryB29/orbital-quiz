@@ -82,9 +82,8 @@
     <input type="number" id="answer" placeholder="숫자를 입력하세요" />
     <button onclick="checkAnswer()">제출</button>
     <div class="result" id="result"></div>
-    <button id="trophyBtn" title="랭킹 보기" style="background:none;border:none;cursor:pointer;font-size:28px;margin-top:16px;">🏆</button>
-    <div id="ranking" style="margin-top:24px; display:none;"></div>
   </div>
+
   <script>
     const quizData = [
       { symbol: "H",  orbital2e: 0,  sOrbitals: 1, pOrbitals: 0, sElectrons: 1,  pElectrons: 0,  valence: 1, unpaired: 1 },
@@ -141,56 +140,12 @@
       updateScoreDisplay();
     }
 
-    let userName = "";
-
-    function askUserName() {
-      // 항상 새로 입력받음 (localStorage 사용 안 함)
-      while (!userName) {
-        userName = prompt("계정 이름을 입력하세요 (랭킹 및 기록에 사용됩니다):");
-      }
-    }
-
-    // 이름별로 문제수/정답률 저장
-    function saveRanking(name, solved, correct) {
-      let rankings = JSON.parse(localStorage.getItem("orbitalQuizRanking") || "{}");
-      if (!rankings[name]) {
-        rankings[name] = { solved: 0, correct: 0 };
-      }
-      rankings[name].solved = solved;
-      rankings[name].correct = correct;
-      localStorage.setItem("orbitalQuizRanking", JSON.stringify(rankings));
-    }
-
-    function showRanking() {
-      const rankings = JSON.parse(localStorage.getItem("orbitalQuizRanking") || "{}");
-      const rankingDiv = document.getElementById("ranking");
-      const rankingArr = Object.entries(rankings).map(([name, data]) => ({
-        name,
-        solved: data.solved,
-        accuracy: data.solved === 0 ? 0 : Math.round((data.correct / data.solved) * 100)
-      }));
-      if (rankingArr.length === 0) {
-        rankingDiv.innerHTML = "<b>랭킹이 없습니다.</b>";
-        return;
-      }
-      rankingArr.sort((a, b) => b.solved - a.solved || b.accuracy - a.accuracy);
-      rankingDiv.innerHTML = "<b>랭킹 TOP 5</b><ol>" +
-        rankingArr.slice(0, 5).map(r => `<li>${r.name} - ${r.solved}문제, 정답률 ${r.accuracy}%</li>`).join("") +
-        "</ol>";
-    }
-
     function updateScoreDisplay() {
+      const acc = attemptedCount === 0 ? 0 : Math.round((correctCount / attemptedCount) * 100);
       document.getElementById("score").innerText = `점수: ${correctCount} / ${attemptedCount}`;
-      const accuracy = attemptedCount === 0 ? 0 : Math.round((correctCount / attemptedCount) * 100);
-      document.getElementById("accuracy").innerText = `정답률: ${accuracy}%`;
-      // 이름별로 기록 저장
-      if (userName) {
-        saveRanking(userName, attemptedCount, correctCount);
-      }
-      showRanking(); // ← 이 줄을 추가!
+      document.getElementById("accuracy").innerText = `정답률: ${acc}%`;
     }
 
-    // 문제별로 한 번만 시도 기록, 오답 후 재시도는 점수/시도수 증가 없음
     function checkAnswer() {
       const input = document.getElementById("answer");
       const userAnswer = parseInt(input.value, 10);
@@ -199,60 +154,28 @@
 
       if (isNaN(userAnswer)) {
         resultBox.style.color = "#d9534f";
-        resultBox.innerText = "숫자를 입력하세요.";
+        resultBox.innerText = "숫자를 입력해주세요.";
         return;
       }
 
-      // 이미 시도한 문제면 오답 안내만
-      if (answeredMap.has(qid)) {
-        if (userAnswer === currentQuestion.answer) {
-          resultBox.style.color = "#d9534f";
-          resultBox.innerText = "이미 이 문제는 시도하셨습니다. 다음 문제로 넘어가세요.";
-        } else {
-          resultBox.style.color = "#d9534f";
-          resultBox.innerText = "오답입니다. 이미 시도한 문제입니다.";
-        }
-        return;
-      }
-
-      // 처음 시도하는 문제만 기록
-      attemptedCount++;
-      answeredMap.set(qid, true);
+      let attempt = answeredMap.get(qid) || 0;
+      if (attempt === 0) attemptedCount++;
+      answeredMap.set(qid, attempt + 1);
 
       if (userAnswer === currentQuestion.answer) {
-        correctCount++;
+        if (attempt === 0) correctCount++;
         resultBox.style.color = "#28a745";
         resultBox.innerText = "정답입니다! 다음 문제로 넘어갑니다.";
         updateScoreDisplay();
         setTimeout(loadQuestion, 1200);
       } else {
         resultBox.style.color = "#d9534f";
-        resultBox.innerText = "오답입니다. 다음 문제로 넘어가세요.";
+        resultBox.innerText = "오답입니다. 다시 시도해 보세요.";
         updateScoreDisplay();
-        setTimeout(loadQuestion, 1200);
       }
-      updateScoreDisplay();
     }
 
-    // 트로피 버튼으로 랭킹 토글
-    document.addEventListener("DOMContentLoaded", function() {
-      const trophyBtn = document.getElementById("trophyBtn");
-      const rankingDiv = document.getElementById("ranking");
-      trophyBtn.onclick = function() {
-        if (rankingDiv.style.display === "none" || rankingDiv.style.display === "") {
-          showRanking();
-          rankingDiv.style.display = "block";
-        } else {
-          rankingDiv.style.display = "none";
-        }
-      };
-    });
-
-    window.onload = function() {
-      askUserName();
-      loadQuestion();
-      // 랭킹은 트로피 버튼으로만 조회
-    };
+    window.onload = loadQuestion;
   </script>
 </body>
 </html>
