@@ -123,32 +123,34 @@
     let attemptedCount = 0;
     const answeredMap = new Map();
 
-    // userName을 localStorage에서 불러오기
-    let userName = localStorage.getItem("orbitalQuizUserName") || "";
+    let currentQuestion;
+    const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+    function loadQuestion() {
+      const element = pickRandom(quizData);
+      const qType = pickRandom(questionTypes);
+      currentQuestion = {
+        id: `${element.symbol}-${qType.key}`,
+        answer: element[qType.key],
+        html: `원소기호: <strong>${element.symbol}</strong><br>${qType.text}`
+      };
+
+      document.getElementById("question").innerHTML = currentQuestion.html;
+      document.getElementById("answer").value = "";
+      document.getElementById("result").innerText = "";
+      updateScoreDisplay();
+    }
+
+    let userName = "";
 
     function askUserName() {
-      // userName이 없을 때만 입력받고, localStorage에 저장
+      // 항상 새로 입력받음 (localStorage 사용 안 함)
       while (!userName) {
         userName = prompt("계정 이름을 입력하세요 (랭킹 및 기록에 사용됩니다):");
-        if (userName) {
-          localStorage.setItem("orbitalQuizUserName", userName);
-        }
       }
     }
 
-    // 점수와 시도수도 localStorage에서 불러오기
-    function loadUserScore() {
-      let rankings = JSON.parse(localStorage.getItem("orbitalQuizRanking") || "{}");
-      if (userName && rankings[userName]) {
-        attemptedCount = rankings[userName].solved;
-        correctCount = rankings[userName].correct;
-      } else {
-        attemptedCount = 0;
-        correctCount = 0;
-      }
-    }
-
-    // 점수 저장
+    // 이름별로 문제수/정답률 저장
     function saveRanking(name, solved, correct) {
       let rankings = JSON.parse(localStorage.getItem("orbitalQuizRanking") || "{}");
       if (!rankings[name]) {
@@ -185,21 +187,7 @@
       if (userName) {
         saveRanking(userName, attemptedCount, correctCount);
       }
-    }
-
-    function loadQuestion() {
-      const element = pickRandom(quizData);
-      const qType = pickRandom(questionTypes);
-      currentQuestion = {
-        id: `${element.symbol}-${qType.key}`,
-        answer: element[qType.key],
-        html: `원소기호: <strong>${element.symbol}</strong><br>${qType.text}`
-      };
-
-      document.getElementById("question").innerHTML = currentQuestion.html;
-      document.getElementById("answer").value = "";
-      document.getElementById("result").innerText = "";
-      updateScoreDisplay();
+      showRanking(); // ← 이 줄을 추가!
     }
 
     // 문제별로 한 번만 시도 기록, 오답 후 재시도는 점수/시도수 증가 없음
@@ -262,8 +250,8 @@
 
     window.onload = function() {
       askUserName();
-      loadUserScore(); // 점수/정답률 불러오기
       loadQuestion();
+      // 랭킹은 트로피 버튼으로만 조회
     };
   </script>
 </body>
