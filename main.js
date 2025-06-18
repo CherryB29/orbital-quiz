@@ -80,11 +80,34 @@ function checkAnswer() {
     resultBox.style.color = "#28a745";
     resultBox.innerText = "정답입니다! 다음 문제로 넘어갑니다.";
     updateScoreDisplay();
+    showConfetti(); // 색종이 효과 실행
     setTimeout(loadQuestion, 1200);
   } else {
     resultBox.style.color = "#d9534f";
     resultBox.innerText = "오답입니다. 다시 시도해 보세요.";
     updateScoreDisplay();
+  }
+}
+
+function showConfetti() {
+  const colors = ["#f44336", "#e91e63", "#9c27b0", "#3f51b5", "#2196f3", "#009688", "#4caf50", "#ffeb3b", "#ff9800"];
+  const container = document.getElementById("confetti-container");
+  const confettiCount = 30;
+
+  for (let i = 0; i < confettiCount; i++) {
+    const confetti = document.createElement("div");
+    confetti.className = "confetti";
+    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+    confetti.style.left = Math.random() * 100 + "vw";
+    confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+    confetti.style.animationDuration = (0.9 + Math.random() * 0.6) + "s";
+    confetti.style.width = (8 + Math.random() * 8) + "px";
+    confetti.style.height = (12 + Math.random() * 10) + "px";
+    container.appendChild(confetti);
+
+    setTimeout(() => {
+      confetti.remove();
+    }, 1300);
   }
 }
 
